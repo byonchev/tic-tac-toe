@@ -1,7 +1,7 @@
 all: server
 
 server: main.o sockets.o helpers.o client_process.o server_process.o
-	gcc main.o sockets.o helpers.o client_process.o server_process.o -pthread -o server
+	gcc main.o sockets.o helpers.o client_process.o server_process.o -pthread -Wall -o server
 
 main.o: main.c
 	gcc -c main.c

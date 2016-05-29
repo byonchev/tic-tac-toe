@@ -26,7 +26,7 @@ static void handle_clients(int sockfd)
 
     struct sockaddr_in client_address;
 
-    int clientsockfd, pid, client_address_length;
+    int clientsockfd, client_address_length;
 
     client_address_length = sizeof(client_address);
 

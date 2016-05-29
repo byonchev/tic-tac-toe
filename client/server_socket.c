@@ -19,7 +19,7 @@ int init_server_socket(int port)
 
     listen(sockfd, MAX_PENDING_CONNECTIONS);
 
-    print_message("Waiting for player2...\n");
+    print_message("Waiting for player 2...\n");
 
     return sockfd;
 }

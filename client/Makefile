@@ -1,7 +1,7 @@
 all: client
 
 client: main.o sockets.o helpers.o server_socket.o client_socket.o game.o
-	gcc main.o sockets.o helpers.o server_socket.o client_socket.o game.o -o client
+	gcc main.o sockets.o helpers.o server_socket.o client_socket.o game.o -Wall -o client 
 
 main.o: main.c
 	gcc -c main.c

@@ -1,79 +1,138 @@
 #include <string.h>
 #include <stdio.h>
+#include <netdb.h>
 #include "server_socket.h"
 #include "client_socket.h"
 #include "game.h"
 #include "../common/helpers.h"
 #include "../common/sockets.h"
 
-int main()
+#define GAME_PORT 54321
+#define MASTER_SERVER_PORT 12345
+
+#define STATUS_ROOM_CREATED 0
+#define STATUS_ROOM_FOUND 1
+
+int connect_to_master_server()
 {
-    int server_sockfd = create_socket();
-    struct sockaddr_in serv_addr;
+    char buffer[128];
+    char *hostname;
+    int sockfd;
+    struct sockaddr_in address;
+    struct hostent *hostent;
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    serv_addr.sin_port = htons(12345);
+    printf("Enter master server address (127.0.0.1): ");
 
-    if (connect(server_sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+    fgets(buffer, 127, stdin);
+    strtok(buffer, "\n");
+
+    sockfd = create_socket();
+
+    hostname = (strlen(buffer) <= 1) ? "127.0.0.1" : buffer;
+
+    hostent = gethostbyname(hostname);
+
+    address.sin_family = AF_INET;
+    address.sin_port = htons(MASTER_SERVER_PORT);
+
+    bcopy((char *)hostent->h_addr, (char *)&address.sin_addr.s_addr, hostent->h_length);
+
+    if (connect(sockfd, (struct sockaddr*) &address, sizeof(address)) < 0)
     {
-        print_error("Error connecting to master server");
-        return 1;
+        return -1;
     }
 
-    char room_name[255];
+    return sockfd;
+}
 
-    printf("Enter game room:");
+void select_game_room(int sockfd)
+{
+    char buffer[256];
+    uint8_t size;
 
-    fgets(room_name, 255, stdin);
-    strtok(room_name, "\n");
+    printf("Enter game room: ");
 
-    uint8_t size = (uint8_t)(strlen(room_name) + 1);
+    fgets(buffer, 255, stdin);
+    strtok(buffer, "\n");
 
-    write(server_sockfd, &size, 1);
-    write(server_sockfd, room_name, size);
+    size = (uint8_t)(strlen(buffer) + 1);
 
-    struct in_addr address;
+    write(sockfd, &size, 1);
+    write(sockfd, buffer, size);
+}
 
+uint8_t read_game_room_status(int mastersockfd)
+{
     uint8_t status;
 
-    read(server_sockfd, &status, sizeof(uint8_t));
+    read(mastersockfd, &status, sizeof(uint8_t));
 
-    int sockfd;
+    return status;
+}
 
-    int listensockfd, client_address_length;
+int create_listen_socket()
+{
+    int listensockfd = init_server_socket(GAME_PORT);
 
-    struct sockaddr_in client_address;
+    return accept(listensockfd, NULL, NULL);
+}
 
-    client_address_length = sizeof(client_address);
+int create_client_socket(int mastersockfd)
+{
+    struct in_addr address;
 
+    read(mastersockfd, &address, sizeof(address));
+
+    printf("Game room address: %s\n", inet_ntoa(address));
+
+    return init_client_socket(address, GAME_PORT);
+}
+
+int main()
+{
+    int mastersockfd;
+    int gamesockfd;
+    uint8_t game_room_status;
     player_t player;
 
-    switch(status)
-    {
-        case 0:
-            listensockfd = init_server_socket(54321);
+    mastersockfd = connect_to_master_server();
 
-            sockfd = accept(listensockfd, (struct sockaddr*) &client_address, &client_address_length);
+    if (mastersockfd < 0)
+    {
+        print_error("Error connecting to master server.");
+        return -1;
+    }
+
+    select_game_room(mastersockfd);
+
+    game_room_status = read_game_room_status(mastersockfd);
+
+    switch (game_room_status)
+    {
+        case STATUS_ROOM_CREATED:
+            gamesockfd = create_listen_socket();
             player = X_PLAYER;
 
             break;
-        case 1:
+        case STATUS_ROOM_FOUND:
             print_message("Joining game room...\n");
 
-            read(server_sockfd, &address, sizeof(address));
+            gamesockfd = create_client_socket(mastersockfd);
 
-            printf("Game room address: %s\n", inet_ntoa(address));
-
-            sockfd = init_client_socket(address, 54321);
             player = O_PLAYER;
+
             break;
+        default:
+            print_error("Invalid status returned from master server! Quitting...\n");
+            return -1;
     }
 
-    if (sockfd > 0)
+    if (gamesockfd < 0)
     {
-        start_game(sockfd, player);
+        print_error("Error connecting to other player...\n");
     }
+
+    start_game(gamesockfd, player);
 
     return 0;
 }
