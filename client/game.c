@@ -81,7 +81,7 @@ static void render_board(board_t board)
     int i;
     char row_letters[] = {'A', 'B', 'C'};
 
-    printf("    1   2   3\n\n");
+    print_message("    1   2   3\n\n");
 
     for (i = 0; i < 3; i += 1)
     {
@@ -144,7 +144,7 @@ void start_game(int sockfd, player_t player)
             int cell_number;
 
             do {
-                printf("Your turn! Enter cell id (A1, B3, etc...): \n");
+                print_message("Your turn! Enter cell id (A1, B3, etc...): \n");
                 fgets(buffer, 128, stdin);
                 cell_number = get_cell_number(buffer);
             } while ((cell_number < 0) || (board.cells[cell_number] != EMPTY));
@@ -157,11 +157,11 @@ void start_game(int sockfd, player_t player)
         }
         else
         {
-            printf("Wait for your opponent's turn.\n");
+            print_message("Wait for your opponent's turn.\n");
 
             if (read(sockfd, &board, sizeof(board)) <= 0)
             {
-                printf("Connection error. Quitting...\n");
+                print_error("Connection error. Quitting...\n");
                 return;
             }
         }
@@ -171,10 +171,10 @@ void start_game(int sockfd, player_t player)
 
     if (winner == EMPTY)
     {
-        printf("DRAW\n");
+        print_message("DRAW\n");
     }
     else
     {
-        printf("The winner is player %s!\n", (winner == X) ? "X" : "O");
+        print_message("The winner is player %s!\n", (winner == X) ? "X" : "O");
     }
 }

@@ -21,7 +21,7 @@ int connect_to_master_server()
     struct sockaddr_in address;
     struct hostent *hostent;
 
-    printf("Enter master server address (127.0.0.1): ");
+    print_message("Enter master server address (127.0.0.1): ");
 
     fgets(buffer, 127, stdin);
     strtok(buffer, "\n");
@@ -50,7 +50,7 @@ void select_game_room(int sockfd)
     char buffer[256];
     uint8_t size;
 
-    printf("Enter game room: ");
+    print_message("Enter game room: ");
 
     fgets(buffer, 255, stdin);
     strtok(buffer, "\n");
