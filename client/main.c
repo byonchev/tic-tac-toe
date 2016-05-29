@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "server_socket.h"
 #include "client_socket.h"
+#include "game.h"
 #include "../common/helpers.h"
 #include "../common/sockets.h"
 
@@ -20,11 +21,17 @@ int main()
         return 1;
     }
 
-    char *test = "testroom";
-    uint8_t size = (uint8_t)(strlen(test) + 1);
+    char room_name[255];
+
+    printf("Enter game room:");
+
+    fgets(room_name, 255, stdin);
+    strtok(room_name, "\n");
+
+    uint8_t size = (uint8_t)(strlen(room_name) + 1);
 
     write(server_sockfd, &size, 1);
-    write(server_sockfd, test, size);
+    write(server_sockfd, room_name, size);
 
     struct in_addr address;
 
@@ -34,38 +41,39 @@ int main()
 
     int sockfd;
 
-    int clientsockfd, client_address_length;
+    int listensockfd, client_address_length;
 
     struct sockaddr_in client_address;
 
     client_address_length = sizeof(client_address);
 
+    player_t player;
+
     switch(status)
     {
         case 0:
-            sockfd = init_server_socket(54321);
+            listensockfd = init_server_socket(54321);
 
-            clientsockfd = accept(sockfd, (struct sockaddr*) &client_address, &client_address_length);
+            sockfd = accept(listensockfd, (struct sockaddr*) &client_address, &client_address_length);
+            player = X_PLAYER;
 
             break;
         case 1:
-            print_message("Joining game room...");
+            print_message("Joining game room...\n");
 
             read(server_sockfd, &address, sizeof(address));
 
-            printf("Address: %s\n", inet_ntoa(address));
+            printf("Game room address: %s\n", inet_ntoa(address));
 
             sockfd = init_client_socket(address, 54321);
-
-            break;
-        case 2:
-            print_message("Room already taken");
-            exit(0);
-
+            player = O_PLAYER;
             break;
     }
 
-
+    if (sockfd > 0)
+    {
+        start_game(sockfd, player);
+    }
 
     return 0;
 }
