@@ -2,7 +2,16 @@
 #define CLIENT_PROCESS_H
 
 #include <netinet/in.h>
+#include "room.h"
 
-void client_process_handle_socket(int sockfd, struct sockaddr_in address);
+typedef struct {
+    int sockfd;
+    struct sockaddr_in address;
+    int *rooms_count;
+    room_t *rooms;
+    pthread_mutex_t *mutex;
+} thread_args_t;
+
+void *client_process_handle_socket(void *data);
 
 #endif
