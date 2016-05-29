@@ -161,7 +161,7 @@ void start_game(int sockfd, player_t player)
 
             if (read(sockfd, &board, sizeof(board)) <= 0)
             {
-                printf("Connection error. Quitting...");
+                printf("Connection error. Quitting...\n");
                 return;
             }
         }

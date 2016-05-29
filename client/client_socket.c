@@ -13,7 +13,7 @@ int init_client_socket(struct in_addr address, int port)
 
     if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        print_error("Error connecting to game server");
+        print_error("Error connecting to game server\n");
         return -1;
     }
 

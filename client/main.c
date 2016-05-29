@@ -99,7 +99,7 @@ int main()
 
     if (mastersockfd < 0)
     {
-        print_error("Error connecting to master server.");
+        print_error("Error connecting to master server.\n");
         return -1;
     }
 
