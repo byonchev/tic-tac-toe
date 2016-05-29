@@ -2,7 +2,7 @@
 #define CLIENT_PROCESS_H
 
 #include <netinet/in.h>
-#include "room.h"
+#include "../common/room.h"
 
 typedef struct {
     int sockfd;

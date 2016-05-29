@@ -1,13 +1,16 @@
 all: server
 
-server: main.o common.o client_process.o server_process.o
-	gcc main.o common.o client_process.o server_process.o -pthread -o server
+server: main.o sockets.o helpers.o client_process.o server_process.o
+	gcc main.o sockets.o helpers.o client_process.o server_process.o -pthread -o server
 
 main.o: main.c
 	gcc -c main.c
 
-common.o: common.c
-	gcc -c common.c
+helpers.o: ../common/helpers.c
+	gcc -c ../common/helpers.c
+
+sockets.o: ../common/sockets.c
+	gcc -c ../common/sockets.c
 
 client_process.o: client_process.c
 	gcc -c client_process.c

@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef HELPERS_H
+#define HELPERS_H
 
 void write_to_file(int fd, char *message);
 void print_error(char *error);

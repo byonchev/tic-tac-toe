@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "common.h"
+#include "../common/helpers.h"
 
 extern room_t* find_room(char *name, int rooms_count, room_t *rooms)
 {
@@ -45,16 +45,23 @@ void *client_process_handle_socket(void *data)
     int *rooms_count = args->rooms_count;
     room_t *rooms = args->rooms;
 
-    int message_size;
+    uint8_t message_size;
     char *room_name;
     room_t *matching_room;
     char buffer[128];
 
-    read(sockfd, &message_size, sizeof(int));
+    if (read(sockfd, &message_size, 1) == 0) {
+        shutdown(sockfd, 2);
+        pthread_exit(NULL);
+    }
 
     room_name = (char*)malloc(message_size);
 
-    read(sockfd, room_name, message_size);
+    if (read(sockfd, room_name, message_size) < message_size)
+    {
+        shutdown(sockfd, 2);
+        pthread_exit(NULL);
+    }
 
     pthread_mutex_lock(args->mutex);
 
@@ -62,7 +69,7 @@ void *client_process_handle_socket(void *data)
 
     if (matching_room == NULL)
     {
-        sprintf(buffer, "Room '%s' not found. Creating...", room_name);
+        sprintf(buffer, "Room '%s' not found. Creating...\n", room_name);
         print_message(buffer);
 
         buffer[0] = 0;
@@ -70,9 +77,9 @@ void *client_process_handle_socket(void *data)
         create_room(room_name, address.sin_addr, rooms_count, rooms);
         write(sockfd, buffer, 1);
     }
-    else if (mathing_room->taken)
+    else if (matching_room->taken)
     {
-        sprintf(buffer, "Room '%s' already taken...", room_name);
+        sprintf(buffer, "Room '%s' already taken...\n", room_name);
 
         buffer[0] = 2;
 
@@ -80,7 +87,7 @@ void *client_process_handle_socket(void *data)
     }
     else
     {
-        sprintf(buffer, "Room '%s' found. Sending client info...", room_name);
+        sprintf(buffer, "Room '%s' found. Sending client info...\n", room_name);
         print_message(buffer);
 
         matching_room->taken = 1;
