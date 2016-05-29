@@ -24,7 +24,7 @@ extern room_t* find_room(char *name, int rooms_count, room_t *rooms)
     return NULL;
 }
 
-extern void create_room(char *name, struct in_addr client_address, int *rooms_count, room_t *rooms)
+extern void create_room(char *name, struct in_addr client_address, int *rooms_count, room_t *rooms, room_t *existing_room)
 {
     room_t new_room;
     struct in_addr address;
@@ -33,7 +33,15 @@ extern void create_room(char *name, struct in_addr client_address, int *rooms_co
     new_room.player_address = client_address;
     new_room.taken = 0;
 
-    rooms[(*rooms_count)++] = new_room;
+    if (existing_room != NULL)
+    {
+        free(existing_room->name);
+        memcpy(existing_room, &new_room, sizeof(room_t));
+    }
+    else
+    {
+        rooms[(*rooms_count)++] = new_room;
+    }
 }
 
 void *client_process_handle_socket(void *data)
@@ -67,22 +75,14 @@ void *client_process_handle_socket(void *data)
 
     matching_room = find_room(room_name, *rooms_count, rooms);
 
-    if (matching_room == NULL)
+    if ((matching_room == NULL) || (matching_room->taken))
     {
         sprintf(buffer, "Room '%s' not found. Creating...\n", room_name);
         print_message(buffer);
 
         buffer[0] = 0;
 
-        create_room(room_name, address.sin_addr, rooms_count, rooms);
-        write(sockfd, buffer, 1);
-    }
-    else if (matching_room->taken)
-    {
-        sprintf(buffer, "Room '%s' already taken...\n", room_name);
-
-        buffer[0] = 2;
-
+        create_room(room_name, address.sin_addr, rooms_count, rooms, matching_room);
         write(sockfd, buffer, 1);
     }
     else
