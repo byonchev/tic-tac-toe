@@ -28,8 +28,6 @@ static void handle_clients(int sockfd)
 
     int clientsockfd, client_address_length;
 
-    client_address_length = sizeof(client_address);
-
     int rooms_count = 0;
     room_t rooms[MAX_ROOMS];
 
@@ -39,6 +37,8 @@ static void handle_clients(int sockfd)
     int i;
 
     pthread_mutex_t mutex;
+
+    client_address_length = sizeof(client_address);
 
     pthread_mutex_init(&mutex, NULL);
 
